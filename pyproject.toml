@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openenv-on-call-env"
+version = "0.1.0"
+description = "Production incident response RL environment — investigate alerts, fix bugs, restore system health"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "openenv-core[core]>=0.2.2",
+    "pytest>=8.0",
+    "openai>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.scripts]
+server = "on_call_env.server.app:main"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["on_call_env", "on_call_env.server", "on_call_env.server.tasks"]
+
+[tool.setuptools.package-dir]
+"on_call_env" = "."
+"on_call_env.server" = "server"
+"on_call_env.server.tasks" = "server/tasks"
