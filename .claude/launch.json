@@ -1,0 +1,28 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "on-call-env API server (uv)",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "server"],
+      "port": 8000
+    },
+    {
+      "name": "on-call-env API server (uvicorn dev, auto-reload)",
+      "runtimeExecutable": "uvicorn",
+      "runtimeArgs": [
+        "on_call_env.server.app:app",
+        "--reload",
+        "--host", "0.0.0.0",
+        "--port", "8000"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "on-call-env API server (python -m)",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "on_call_env.server.app"],
+      "port": 8000
+    }
+  ]
+}
