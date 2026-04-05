@@ -8,13 +8,16 @@ RUN pip install --no-cache-dir uv
 # Copy dependency manifest first (layer cache)
 COPY pyproject.toml README.md ./
 
-# Stub package directories so editable install resolves correctly
-RUN mkdir -p on_call_env/server/tasks \
-    && touch on_call_env/__init__.py \
-          on_call_env/server/__init__.py \
-          on_call_env/server/tasks/__init__.py
+# Stub package layout matching pyproject.toml package-dir mappings:
+#   "on_call_env"              = "."          → /app/__init__.py
+#   "on_call_env.server"       = "server"     → /app/server/__init__.py
+#   "on_call_env.server.tasks" = "server/tasks" → /app/server/tasks/__init__.py
+RUN mkdir -p server/tasks \
+    && touch __init__.py \
+             server/__init__.py \
+             server/tasks/__init__.py
 
-# Install all dependencies
+# Install all dependencies (uses stubs so editable install resolves correctly)
 RUN uv pip install --system -e ".[dev]"
 
 # Copy full source (overwrites stubs with real files)
