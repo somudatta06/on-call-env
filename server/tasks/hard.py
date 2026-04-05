@@ -15,7 +15,9 @@ Bug 2 — validator.py:
   `validate_amount()` uses Python `float(amount_str)`.  For amounts like "1000.10",
   float introduces a representation error: 1000.0999999999999.
   Downstream rounding then stores "1000.09" instead of "1000.10" — $0.01 per txn.
-  Fix: use `Decimal(amount_str)` for lossless decimal arithmetic.
+  Fix: (a) use `Decimal(amount_str)` directly (not float), (b) also catch
+  `InvalidOperation` in the except clause (Decimal raises this, not ValueError),
+  and (c) return the Decimal directly (not via float→str→Decimal round-trip).
 
 Bug 3 — ledger.py:
   `record_transaction()` silently truncates merchant names to 50 chars with `[:50]`.
@@ -374,7 +376,7 @@ class PaymentServiceTask(BaseTask):
     description = (
         "The payment service has three bugs causing duplicate charges, precision loss, "
         "and orphaned ledger records. Read logs and all three source files to identify "
-        "each bug, fix them, and verify all 20 tests pass."
+        "each bug, fix them, and verify all 15 tests pass."
     )
     services_total = 3
     max_steps = 40
