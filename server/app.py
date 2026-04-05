@@ -47,7 +47,7 @@ app = create_app(
 )
 
 
-def main(host: str = "0.0.0.0", port: int = 8000) -> None:
+def main(host: str = "0.0.0.0", port: int = 7860) -> None:
     """
     Entry point for direct execution.
 
