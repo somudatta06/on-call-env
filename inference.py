@@ -26,6 +26,9 @@ MODEL_NAME   = os.getenv("MODEL_NAME",   "Qwen/Qwen2.5-72B-Instruct")
 # NO default for HF_TOKEN (checklist item 3):
 HF_TOKEN = os.getenv("HF_TOKEN")
 
+# Environment server URL — defaults to HF Space; evaluator may override
+ENV_URL = os.getenv("ENV_URL", "https://somudatta06-on-call-env.hf.space")
+
 # Optional — only needed when running against a local Docker image:
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 
@@ -135,11 +138,11 @@ def get_action(client: OpenAI, obs_text: str, history: List[str]) -> OnCallActio
 
 async def run_task(client: OpenAI, task_id: str) -> None:
     """Run one complete episode for a given task_id."""
-    # Connect via Docker image if LOCAL_IMAGE_NAME is set, else direct HTTP
+    # Connect via Docker image if LOCAL_IMAGE_NAME is set, else HF Space
     if LOCAL_IMAGE_NAME:
         env = await OnCallEnv.from_docker_image(LOCAL_IMAGE_NAME)
     else:
-        env = OnCallEnv(base_url="http://localhost:8000")
+        env = OnCallEnv(base_url=ENV_URL)
 
     rewards: List[float] = []
     history: List[str]   = []
