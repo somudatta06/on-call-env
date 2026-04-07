@@ -26,6 +26,9 @@ MODEL_NAME   = os.getenv("MODEL_NAME",   "Qwen/Qwen2.5-72B-Instruct")
 # NO default for HF_TOKEN (checklist item 3):
 HF_TOKEN = os.getenv("HF_TOKEN")
 
+# Evaluator injects API_KEY for their LiteLLM proxy; fall back to HF_TOKEN:
+API_KEY = os.getenv("API_KEY") or HF_TOKEN
+
 # Environment server URL — defaults to HF Space; evaluator may override
 ENV_URL = os.getenv("ENV_URL", "https://somudatta06-on-call-env.hf.space")
 
@@ -222,7 +225,7 @@ async def run_task(client: OpenAI, task_id: str) -> None:
 # ── Main: run all 3 tasks sequentially ────────────────────────────────────────
 
 async def main() -> None:
-    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)  # checklist item 4
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)  # uses evaluator-injected API_KEY
     for task_id in TASKS:
         await run_task(client, task_id)
 
