@@ -147,8 +147,9 @@ class BaseTask(ABC):
         return self.test_files
 
     def grade(self, tests_passing: int) -> float:
-        """Final grader: deterministic, always in [0.0, 1.0]."""
-        return round(tests_passing / max(self.tests_total, 1), 4)
+        """Final grader: strictly in (0, 1) — evaluator rejects 0.0 and 1.0."""
+        raw = tests_passing / max(self.tests_total, 1)
+        return max(0.01, min(0.99, round(raw, 4)))
 
     # ── Internal ───────────────────────────────────────────────────────────────
 
