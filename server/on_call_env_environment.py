@@ -27,11 +27,15 @@ except ImportError:
 
 
 # ── Reward computation ─────────────────────────────────────────────────────────
+# The grader computes a task score from step rewards. Each individual reward
+# AND the cumulative sum must stay strictly in (0, 1). With max 40 steps we
+# budget:  intermediate = 0.01 each  →  max 39 × 0.01 = 0.39
+#          terminal     ≤ 0.59       →  total ≤ 0.98  < 1.0
+# All values safe at 2-decimal formatting (never "0.00" or "1.00").
 
-def _clamp_reward(r: float) -> float:
-    """Clamp reward to strictly (0, 1) — grader rejects 0.0 and 1.0.
-    Use 0.01/0.99 so 2-decimal formatting never rounds to 0.00 or 1.00."""
-    return max(0.01, min(0.99, r))
+_INTERMEDIATE_REWARD = 0.01          # safe: formats as "0.01"
+_MAX_TERMINAL_REWARD = 0.59          # 0.39 + 0.59 = 0.98 < 1.0
+_MIN_TERMINAL_REWARD = 0.02          # formats as "0.02"
 
 
 def _compute_reward(
@@ -44,33 +48,26 @@ def _compute_reward(
     done: bool,
 ) -> float:
     """
-    Dense reward shaping:
-    1. Test-delta progress:  main signal, always informative
-    2. Exploration bonus:    one-time reward for first read of each source file
-    3. Step penalty:         discourages blind iteration
-    4. Terminal bonus:       all tests pass = incident resolved + efficiency bonus
+    Reward per step.
+    - Non-terminal steps: fixed 0.01
+    - Terminal step (done=True): proportional to test pass rate, in [0.02, 0.59]
 
-    All values clamped to (0.001, 0.999) for grader compliance.
+    Guarantees:
+    - Each individual reward ∈ (0, 1)   (actually [0.01, 0.59])
+    - Cumulative sum over episode ∈ (0, 1) (max ≈ 0.98)
+    - 2-decimal format never produces "0.00" or "1.00"
     """
+    if not done:
+        return _INTERMEDIATE_REWARD
+
+    # Terminal step — score proportional to how many tests pass
     if tests_total == 0:
-        return 0.01
+        return _MIN_TERMINAL_REWARD
 
-    # 1. Dense test-delta progress
-    progress = (curr_passing - prev_passing) / tests_total  # [-1.0, +1.0]
-
-    # 2. Exploration bonus (first time this file is read)
-    exploration = 0.03 if new_file else 0.0
-
-    # 3. Step penalty
-    step_penalty = -0.008
-
-    # 4. Terminal bonus when all tests pass
-    if done and curr_passing == tests_total:
-        efficiency = max(0.0, 0.25 * (1.0 - step_count / max(max_steps, 1)))
-        return _clamp_reward(0.9 + efficiency * 0.09)
-
-    raw = 0.5 + progress * 0.4 + exploration + step_penalty
-    return _clamp_reward(raw)
+    ratio = curr_passing / tests_total  # 0.0 to 1.0
+    # Scale into [_MIN_TERMINAL_REWARD, _MAX_TERMINAL_REWARD]
+    reward = _MIN_TERMINAL_REWARD + ratio * (_MAX_TERMINAL_REWARD - _MIN_TERMINAL_REWARD)
+    return round(reward, 4)  # e.g. 0.59, 0.31, 0.02
 
 
 # ── Environment ────────────────────────────────────────────────────────────────
