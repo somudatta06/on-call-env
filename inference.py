@@ -189,7 +189,7 @@ async def run_task(client: OpenAI, task_id: str) -> None:
                 except Exception:
                     pass
 
-            reward = result.reward if result.reward is not None else 0.0
+            reward = result.reward if result.reward is not None else 0.01
             done   = result.done
 
             rewards.append(reward)

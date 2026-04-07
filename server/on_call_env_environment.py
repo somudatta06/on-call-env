@@ -29,8 +29,9 @@ except ImportError:
 # ── Reward computation ─────────────────────────────────────────────────────────
 
 def _clamp_reward(r: float) -> float:
-    """Clamp reward to strictly (0, 1) — the grader rejects 0.0 and 1.0."""
-    return max(0.001, min(0.999, r))
+    """Clamp reward to strictly (0, 1) — grader rejects 0.0 and 1.0.
+    Use 0.01/0.99 so 2-decimal formatting never rounds to 0.00 or 1.00."""
+    return max(0.01, min(0.99, r))
 
 
 def _compute_reward(
@@ -52,7 +53,7 @@ def _compute_reward(
     All values clamped to (0.001, 0.999) for grader compliance.
     """
     if tests_total == 0:
-        return 0.001
+        return 0.01
 
     # 1. Dense test-delta progress
     progress = (curr_passing - prev_passing) / tests_total  # [-1.0, +1.0]
@@ -169,7 +170,7 @@ class OnCallEnvironment(Environment):
             files_in_workspace=self._task.file_names,
             step_count=0,
             done=False,
-            reward=0.001,
+            reward=0.01,
         )
 
     def step(
@@ -183,13 +184,13 @@ class OnCallEnvironment(Environment):
             return OnCallObservation(
                 last_action_result="[ERROR] Call reset() first to start an episode.",
                 done=True,
-                reward=0.001,
+                reward=0.01,
             )
 
         if self._done:
             return self._build_obs(
                 "Episode already done. Call reset() to start a new episode.",
-                reward=0.001,
+                reward=0.01,
             )
 
         prev_passing = self._tests_passing
