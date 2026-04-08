@@ -92,10 +92,10 @@ def log_step(
     )
 
 
-def log_end(success: bool, steps: int, rewards: List[float]) -> None:
+def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     print(
-        f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}",
+        f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}",
         flush=True,
     )
 
@@ -225,7 +225,13 @@ async def run_task(client: OpenAI, task_id: str) -> None:
         if not rewards:
             rewards = [0.01]
 
-        log_end(success=success, steps=steps_taken, rewards=rewards)
+        # Compute task score strictly in (0, 1) — evaluator reads score= from [END] line.
+        # sum(rewards) is in (0.01, 0.98) by design; clamp defensively.
+        raw   = sum(rewards)
+        score = round(0.01 + raw * 0.98, 4)          # maps [0,1] → [0.01, 0.99]
+        score = max(0.001, min(0.999, score))         # hard clamp — never exactly 0.0 or 1.0
+
+        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
 # ── Main: run all 3 tasks sequentially ────────────────────────────────────────
